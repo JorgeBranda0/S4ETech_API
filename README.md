@@ -11,3 +11,6 @@ O projeto consiste em uma API que gerencia o cadastro de 'Associados' e 'Empresa
   - Autenticação = Autenticação do SQL Server;
   - Logon: SA
   - Password: P@ssw0rd
+
+# Observação:
+  - É necessário se conectar ao banco de dados primeiro antes de startar o projeto, pois assim que rodar, ele iniciará automaticamente o Migrations que foi implementado.
