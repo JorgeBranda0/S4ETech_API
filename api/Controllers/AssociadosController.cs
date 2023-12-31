@@ -41,9 +41,9 @@ namespace api.Controllers
                     _context.Associados.AddRange(associados);
                     await _context.SaveChangesAsync();
 
-                    if (infoAssociado.EmpresasId != null)
+                    foreach (var empresaId in infoAssociado.EmpresasId)
                     {
-                        foreach (var empresaId in infoAssociado.EmpresasId)
+                        if (empresaId > 0)
                         {
                             var empresa = _context.Empresas.FirstOrDefault(p => p.Id == empresaId);
                             if (empresa == null)
