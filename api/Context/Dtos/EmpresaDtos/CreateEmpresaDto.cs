@@ -10,6 +10,6 @@ namespace api.Context.Dtos.EmpresaDtos
 
         [Required(ErrorMessage = "O campo 'Cnpj' é obrigatório")]
         public string Cnpj { get; set; }
-        public List<int> AssociadoId { get; set; }
+        public List<int> AssociadosId { get; set; }
     }
 }

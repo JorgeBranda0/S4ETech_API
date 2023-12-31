@@ -13,6 +13,7 @@ namespace api.Controllers
     [Route("api/[controller]")]
     public class AfiliacoesController : ControllerBase
     {
+        #region Construtores
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
 
@@ -21,25 +22,32 @@ namespace api.Controllers
             _context = context;
             _mapper = mapper;
         }
+        #endregion
 
         #region READ
         [HttpGet]
-        public IEnumerable<Afiliacao> RecuperaAfiliacao()
+        public IActionResult RecuperaAfiliacao()
         {
-            return _context.Afiliacoes;
+            var afiliacoes = _context.Afiliacoes;
+            
+            if (afiliacoes.Any()) 
+                return Ok(afiliacoes);
+            else
+                return NotFound("Não existem afiliações para exibir no momento.");
         }
 
         [HttpGet("{afiliacaoId}")]
         public IActionResult RecuperaAfiliacaoPorId(int afiliacaoId)
         {
             Afiliacao afiliacao = _context.Afiliacoes.FirstOrDefault(p => p.Id == afiliacaoId);
+            
             if (afiliacao != null)
             {
                 ReadAfiliacaoDto afiliacaoDto = _mapper.Map<ReadAfiliacaoDto>(afiliacao);
                 return Ok(afiliacao);
             }
 
-            return NotFound();
+            return NotFound($"Não foi possível encontrar a afiliação mencionada: {afiliacaoId}");
         }
         #endregion
     }

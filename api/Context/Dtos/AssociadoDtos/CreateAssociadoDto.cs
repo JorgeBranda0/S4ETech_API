@@ -12,6 +12,6 @@ namespace api.Context.Dtos.AssociadoDtos
 
         [Required(ErrorMessage = "O campo 'Data de Nascimento' é obrigatório")]
         public DateTime DataNascimento { get; set; }
-        public List<int> EmpresaId { get; set; }
+        public List<int> EmpresasId { get; set; }
     }
 }

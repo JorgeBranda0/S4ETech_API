@@ -11,6 +11,7 @@ namespace api.Controllers
     [Route("api/[controller]")]
     public class AssociadosController : ControllerBase
     {
+        #region Construtores
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
 
@@ -19,6 +20,7 @@ namespace api.Controllers
             _context = context;
             _mapper = mapper;
         }
+        #endregion
 
         #region CREATE
         [HttpPost]
@@ -26,17 +28,27 @@ namespace api.Controllers
         {
             List<Associado> associados = _mapper.Map<List<Associado>>(associadoDto);
             CreateAfiliacaoDto afiliacaoDto = new();
-            List<Afiliacao> afiliacoes = new();
+            Afiliacao afiliacoes = new();
 
-            try
+            if (associados.Any())
             {
                 foreach (var infoAssociado in associados)
                 {
+                    var validaExisteAssociado = _context.Associados.FirstOrDefault(p => p.Cpf == infoAssociado.Cpf);
+                    if (validaExisteAssociado != null)
+                        return NotFound($"Associado mencionado já existe! {infoAssociado.Cpf}.");
+
+                    _context.Associados.AddRange(associados);
+                    await _context.SaveChangesAsync();
+
                     if (infoAssociado.EmpresasId != null)
                     {
                         foreach (var empresaId in infoAssociado.EmpresasId)
                         {
                             var empresa = _context.Empresas.FirstOrDefault(p => p.Id == empresaId);
+                            if (empresa == null)
+                                return NotFound($"Empresa mencionada não foi encontrada: {empresaId}.");
+
                             afiliacaoDto = new()
                             {
                                 EmpresaId = empresa.Id,
@@ -44,30 +56,28 @@ namespace api.Controllers
                                 AssociadoId = infoAssociado.Id,
                                 NomeAssociado = infoAssociado.Nome
                             };
-                        }
 
-                        afiliacoes = _mapper.Map<List<Afiliacao>>(afiliacaoDto);
-                        _context.Afiliacoes.AddRange(afiliacoes);
+                            afiliacoes = _mapper.Map<Afiliacao>(afiliacaoDto);
+                            _context.Afiliacoes.AddRange(afiliacoes);
+                            await _context.SaveChangesAsync();
+                        }
                     }
                 }
-
-                _context.Associados.AddRange(associados);
-                await _context.SaveChangesAsync();
-
-                return Ok();
+                return Ok("Associado(s) cadastrado(s) com sucesso!");
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return NotFound("Não foi possível cadastrar o(s) associado(s) mencionado(s).");
         }
         #endregion
 
         #region READ
         [HttpGet]
-        public IEnumerable<Associado> RecuperaAssociados()
+        public IActionResult RecuperaAssociados()
         {
-            return _context.Associados;
+            var associados = _context.Associados;
+            if (associados.Any())
+                return Ok(associados);
+            else
+                return NotFound("Não existem associados para exibir no momento.");
         }
 
         [HttpGet("{associadoId}")]
@@ -80,7 +90,7 @@ namespace api.Controllers
                 return Ok(associado);
             }
 
-            return NotFound();
+            return NotFound($"Não foi possível encontrar o associado mencionado: {associadoId}.");
         }
         #endregion
 
@@ -93,17 +103,17 @@ namespace api.Controllers
         {
             CreateAfiliacaoDto afiliacaoDto = new();
             Afiliacao afiliacao = new();
-
             List<Associado> associado = _context.Associados.Where(p => p.Id == associadoId).ToList();
-            if (associado != null)
+
+            if (associado.Any())
             {
                 foreach (var item in associado)
                 {
-                    if (associadoDto.Nome != "string" || string.IsNullOrEmpty(associadoDto.Nome) || 
-                        associadoDto.Cpf != "string" || string.IsNullOrEmpty(associadoDto.Cpf)) 
+                    if (associadoDto.Nome != "string" || string.IsNullOrEmpty(associadoDto.Nome) ||
+                        associadoDto.Cpf != "string" || string.IsNullOrEmpty(associadoDto.Cpf))
                     {
-                        var atualizaNomeAssociado = _context.Afiliacoes.Where(p => p.AssociadoId == item.Id).ToList();
-                        foreach (var atualizaAssociado in atualizaNomeAssociado) 
+                        var atualizaNomeAssociadoAfiliacao = _context.Afiliacoes.Where(p => p.AssociadoId == item.Id).ToList();
+                        foreach (var atualizaAssociado in atualizaNomeAssociadoAfiliacao)
                         {
                             atualizaAssociado.NomeAssociado = associadoDto.Nome;
                             _context.Afiliacoes.Update(atualizaAssociado);
@@ -144,12 +154,10 @@ namespace api.Controllers
                         }
                     }
                 }
-
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
-
-            return NotFound();
+            return NotFound($"Associado mencionado não foi encontrado: {associadoId}.");
         }
         #endregion
 
@@ -158,20 +166,20 @@ namespace api.Controllers
         public IActionResult ExcluiAssociado(int associadoId)
         {
             Associado associado = _context.Associados.FirstOrDefault(p => p.Id == associadoId);
+            List<Afiliacao> afiliacoes = _context.Afiliacoes.Where(p => p.AssociadoId == associado.Id).ToList();
+
             if (associado != null)
             {
-                List<Afiliacao> afiliacoes = _context.Afiliacoes.Where(p => p.AssociadoId == associado.Id).ToList();
                 foreach (var item in afiliacoes)
-                {
                     _context.Afiliacoes.Remove(item);
-                }
-                _context.Associados.Remove(associado);
 
+                _context.Associados.Remove(associado);
                 _context.SaveChanges();
-                return NoContent();
+
+                return Ok("Associado excluído com sucesso!");
             }
 
-            return NotFound();
+            return NotFound($"Não foi possível excluir o associado mencionado: {associadoId}");
         }
         #endregion
     }
