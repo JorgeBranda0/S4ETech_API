@@ -11,12 +11,12 @@ namespace api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AfliacoesController : ControllerBase
+    public class AfiliacoesController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
 
-        public AfliacoesController(AppDbContext context, IMapper mapper)
+        public AfiliacoesController(AppDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
